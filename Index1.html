@@ -1,201 +1,474 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CropGuard - Identify Crop Diseases Instantly with AI</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script>
-tailwind.config={theme:{extend:{fontFamily:{sans:['Plus Jakarta Sans','sans-serif']},colors:{brand:{50:'#f0fdf4',100:'#dcfce7',500:'#22c55e',600:'#16a34a',700:'#15803d',800:'#166534',900:'#14532d'}}}}};
-</script>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-body{font-family:'Plus Jakarta Sans','Noto Sans Telugu','Noto Sans Devanagari','Noto Sans Tamil',sans-serif!important;background:linear-gradient(rgba(10,39,25,.72),rgba(15,23,42,.82)),url('https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat fixed;color:#0f172a}
-.hero-bg{background:linear-gradient(rgba(5,78,51,.78),rgba(15,23,42,.88)),url('https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;position:relative;overflow:hidden}.hero-bg::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at top left,rgba(134,239,172,.18),transparent 38%),radial-gradient(circle at bottom right,rgba(74,222,128,.18),transparent 30%)}.hero-bg > div{position:relative;z-index:1}.feature-card{background:rgba(255,255,255,.12);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.18);box-shadow:0 22px 45px rgba(10,30,20,.16)}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CropGuard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          boxShadow: {
+            soft: '0 12px 35px rgba(15, 23, 42, 0.08)'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg-home: linear-gradient(180deg, #f4fbf5 0%, #eefaf2 35%, #f9fafb 100%);
+      --bg-db: linear-gradient(180deg, #f7fbff 0%, #eef6ff 38%, #f9fafb 100%);
+      --bg-history: linear-gradient(180deg, #fffaf5 0%, #fff3eb 38%, #fffdfb 100%);
+      --bg-scan: linear-gradient(180deg, #f2fbff 0%, #effcf6 38%, #f9fafb 100%);
+      --card: rgba(255,255,255,0.8);
+      --border: rgba(148,163,184,0.25);
+      --text: #0f172a;
+      --muted: #475569;
+      --primary: #22c55e;
+      --primary-dark: #16a34a;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg-home);
+      color: var(--text);
+      transition: background 0.3s ease;
+    }
+
+    body[data-page="home"] { background: var(--bg-home); }
+    body[data-page="database"] { background: var(--bg-db); }
+    body[data-page="history"] { background: var(--bg-history); }
+    body[data-page="scan"] { background: var(--bg-scan); }
+
+    .glass {
+      background: rgba(255,255,255,0.74);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+    }
+
+    .page-shell {
+      min-height: calc(100vh - 72px);
+      padding: 24px 0 56px;
+    }
+
+    .feature-card {
+      background: linear-gradient(135deg, rgba(34,197,94,0.18), rgba(14,116,144,0.12));
+      border: 1px solid rgba(148,163,184,0.25);
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    .disease-card {
+      background: rgba(255,255,255,0.8);
+      border: 1px solid rgba(148,163,184,0.2);
+      box-shadow: 0 8px 20px rgba(15,23,42,0.04);
+    }
+
+    .status-pill { 
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .status-high { background: rgba(239,68,68,0.12); color: #b91c1c; }
+    .status-medium { background: rgba(245,158,11,0.12); color: #a16207; }
+    .status-low { background: rgba(34,197,94,0.12); color: #166534; }
+  </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col justify-between">
-<header class="sticky top-0 z-40 bg-slate-900 text-white shadow-md">
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-<div onclick="switchTab('home')" class="flex items-center gap-2 cursor-pointer">
-<div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center font-bold text-white"><i class="fa-solid fa-leaf"></i></div>
-<span class="text-xl font-bold tracking-tight">CropGuard</span></div>
-<div class="flex items-center gap-3 sm:gap-6 text-xs sm:text-sm font-medium">
-<select id="lang-select" onchange="changeLanguage(this.value)" class="bg-slate-800 text-slate-200 border border-slate-700 rounded-lg px-2 py-1 text-xs focus:outline-none">
-<option value="en">🌐 English</option><option value="te">తెలుగు</option><option value="hi">हिंदी</option><option value="ta">தமிழ்</option></select>
-<button onclick="switchTab('database')" class="hover:text-brand-500 transition flex items-center gap-1.5"><i class="fa-solid fa-database text-xs"></i><span id="nav-db">Diseases</span></button>
-<button onclick="switchTab('history')" class="hover:text-brand-500 transition flex items-center gap-1.5"><i class="fa-solid fa-clock-rotate-left text-xs"></i><span id="nav-history">History</span></button>
-<button onclick="switchTab('scan')" id="nav-scan" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition"><i class="fa-solid fa-qrcode text-xs"></i> <span>Scan Now</span></button>
-</div></div></header>
+<body data-page="home">
+  <header class="sticky top-0 z-40 bg-slate-900 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center text-lg font-bold">🌿</div>
+        <div>
+          <div class="text-lg font-extrabold tracking-tight">CropGuard</div>
+        </div>
+      </div>
 
-<main class="flex-grow">
-<section id="view-home" class="block">
-<div class="hero-bg py-20 px-4 text-center text-white"><div class="max-w-4xl mx-auto">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-brand-500 text-xs font-semibold mb-6"><i class="fa-solid fa-bolt"></i> <span id="hero-badge">AI Powered Crop Disease Detection</span></div>
-<h1 id="hero-title" class="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight">Identify Crop Diseases <br><span class="text-brand-500">Instantly with AI</span></h1>
-<p class="mt-6 text-base sm:text-lg text-slate-200 max-w-2xl mx-auto">Smart diagnosis for healthier crops, faster decisions, and better yields — all from a single leaf image.</p>
-<div class="mt-8 flex flex-wrap justify-center gap-4">
-<button onclick="startNewScan()" id="hero-cta-scan" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-6 py-3 rounded-xl shadow-lg flex items-center gap-2 transition"><i class="fa-solid fa-camera"></i> Scan Your Crop</button>
-<button onclick="switchTab('database')" id="hero-cta-browse" class="bg-slate-800/90 hover:bg-slate-800 text-white border border-slate-700 font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition"><i class="fa-solid fa-magnifying-glass"></i> Browse Diseases</button>
-</div></div></div>
-<div class="max-w-6xl mx-auto px-4 py-16">
-<h2 id="how-title" class="text-2xl font-bold text-center text-slate-900 mb-10">How CropGuard Works</h2>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-<div class="bg-white/80 p-6 rounded-2xl border border-slate-200 shadow-sm text-center backdrop-blur"><div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center mx-auto text-xl mb-4"><i class="fa-solid fa-upload"></i></div><h3 class="font-bold text-slate-900 mb-2">Upload or Capture</h3><p class="text-sm text-slate-600">Take a photo of your crop leaf using your camera or upload an existing leaf image from gallery.</p></div>
-<div class="bg-white/80 p-6 rounded-2xl border border-slate-200 shadow-sm text-center backdrop-blur"><div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center mx-auto text-xl mb-4"><i class="fa-solid fa-brain"></i></div><h3 class="font-bold text-slate-900 mb-2">AI Analysis</h3><p class="text-sm text-slate-600">Our CNN deep-learning model analyzes the leaf image against disease classes across multiple crop types.</p></div>
-<div class="bg-white/80 p-6 rounded-2xl border border-slate-200 shadow-sm text-center backdrop-blur"><div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center mx-auto text-xl mb-4"><i class="fa-solid fa-check-circle"></i></div><h3 class="font-bold text-slate-900 mb-2">Get Results</h3><p class="text-sm text-slate-600">Receive instant disease identification with confidence scores, description, treatment, and prevention tips.</p></div>
-</div>
-<div class="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
-<div class="bg-slate-100/90 p-4 rounded-xl text-center"><div class="text-2xl font-black text-brand-600">52</div><div class="text-xs font-semibold text-slate-600 mt-1">Disease Classes</div></div>
-<div class="bg-slate-100/90 p-4 rounded-xl text-center"><div class="text-2xl font-black text-brand-600">13</div><div class="text-xs font-semibold text-slate-600 mt-1">Crops Supported</div></div>
-<div class="bg-slate-100/90 p-4 rounded-xl text-center"><div class="text-2xl font-black text-brand-600" id="total-scans-count">3</div><div class="text-xs font-semibold text-slate-600 mt-1">Total Scans</div></div>
-<div class="bg-slate-100/90 p-4 rounded-xl text-center"><div class="text-2xl font-black text-brand-600">13+</div><div class="text-xs font-semibold text-slate-600 mt-1">Registered Users</div></div>
-</div>
-<div class="mt-16 feature-card rounded-[30px] overflow-hidden">
-<div class="grid grid-cols-1 lg:grid-cols-2">
-<div class="p-8 lg:p-10 text-white">
-<p class="text-xs uppercase tracking-[0.24em] text-brand-300 font-bold">Why farmers trust us</p>
-<h3 class="mt-4 text-3xl font-extrabold leading-tight">Healthy fields start with quick detection.</h3>
-<p class="mt-4 text-sm text-slate-200 leading-7">CropGuard helps farmers identify leaf diseases early, reduce crop loss, and plan targeted treatment before the problem spreads across the field.</p>
-<ul class="mt-6 space-y-4 text-sm text-slate-100">
-<li class="flex items-start gap-3"><span class="mt-1 text-brand-400"><i class="fa-solid fa-seedling"></i></span><span>Early disease warnings for tomatoes, potatoes, rice, wheat, and more.</span></li>
-<li class="flex items-start gap-3"><span class="mt-1 text-brand-400"><i class="fa-solid fa-plant-wilt"></i></span><span>Actionable treatment and prevention plans tailored to each disease.</span></li>
-<li class="flex items-start gap-3"><span class="mt-1 text-brand-400"><i class="fa-solid fa-chart-line"></i></span><span>Simple workflow for scanning, reviewing history, and monitoring field health.</span></li>
-</ul>
-</div>
-<div class="p-8 lg:p-10 bg-slate-950/25">
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-<div class="rounded-2xl bg-emerald-500/20 border border-emerald-300/40 p-4 text-white shadow-lg"><div class="text-2xl mb-2"><i class="fa-solid fa-camera"></i></div><p class="text-xs uppercase tracking-[0.2em] text-emerald-200">Scan</p><h4 class="mt-2 text-xl font-bold">Leaf images</h4></div>
-<div class="rounded-2xl bg-amber-500/20 border border-amber-300/40 p-4 text-white shadow-lg"><div class="text-2xl mb-2"><i class="fa-solid fa-magnifying-glass-chart"></i></div><p class="text-xs uppercase tracking-[0.2em] text-amber-200">Diagnose</p><h4 class="mt-2 text-xl font-bold">Disease match</h4></div>
-<div class="rounded-2xl bg-sky-500/20 border border-sky-300/40 p-4 text-white shadow-lg"><div class="text-2xl mb-2"><i class="fa-solid fa-droplet"></i></div><p class="text-xs uppercase tracking-[0.2em] text-sky-200">Treat</p><h4 class="mt-2 text-xl font-bold">Smart care</h4></div>
-<div class="rounded-2xl bg-rose-500/20 border border-rose-300/40 p-4 text-white shadow-lg"><div class="text-2xl mb-2"><i class="fa-solid fa-heart-pulse"></i></div><p class="text-xs uppercase tracking-[0.2em] text-rose-200">Protect</p><h4 class="mt-2 text-xl font-bold">Healthy growth</h4></div>
-</div>
-</div>
-</div>
-</div>
-<div class="mt-12"><h2 id="supported-title" class="text-2xl font-bold text-center text-slate-900 mb-6">Supported Crops</h2><div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3" id="crops-grid"></div></div>
-</div></section>
+      <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-200">
+        <button data-page-btn="home" class="nav-btn hover:text-emerald-400" onclick="switchTab('home')">Home</button>
+        <button data-page-btn="database" class="nav-btn hover:text-emerald-400" onclick="switchTab('database')" id="nav-db">Diseases</button>
+        <button data-page-btn="history" class="nav-btn hover:text-emerald-400" onclick="switchTab('history')" id="nav-history">History</button>
+        <button data-page-btn="scan" class="nav-btn hover:text-emerald-400" onclick="switchTab('scan')" id="nav-scan">Scan</button>
+      </nav>
 
-<section id="view-database" class="hidden max-w-7xl mx-auto px-4 py-8">
-<div class="mb-6"><h1 class="text-2xl font-bold text-slate-900">Disease Database</h1><p class="text-xs text-slate-500 mt-1">Browse disease classes across 13 crop types</p></div>
-<div class="mb-6 space-y-4">
-<div class="relative max-w-md"><i class="fa-solid fa-search absolute left-3 top-3 text-slate-400 text-sm"></i><input type="text" id="db-search" oninput="filterDatabase()" placeholder="Search diseases..." class="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-brand-500"></div>
-<div class="flex flex-wrap gap-2" id="filter-chips"></div></div>
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="disease-cards-container"></div>
-</section>
+      <select id="lang-select" onchange="changeLanguage(this.value)" class="bg-slate-800 text-slate-100 border border-slate-700 rounded-lg px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+        <option value="en">🌐 English</option>
+        <option value="te">తెలుగు</option>
+        <option value="hi">हिंदी</option>
+        <option value="ta">தமிழ்</option>
+      </select>
+    </div>
+  </header>
 
-<section id="view-history" class="hidden max-w-5xl mx-auto px-4 py-8">
-<div class="flex justify-between items-center mb-6">
-<div><h1 class="text-2xl font-bold text-slate-900">Scan History</h1><p class="text-xs text-slate-500 mt-1">Click on any previous scan to view detailed diagnostic recommendations & tips</p></div>
-<button onclick="startNewScan()" class="bg-brand-600 hover:bg-brand-700 transition text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-md cursor-pointer"><i class="fa-solid fa-plus"></i> New Scan</button>
-</div>
-<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden" id="history-list"></div>
-</section>
+  <main class="page-shell">
+    <section id="view-home" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="rounded-[32px] p-6 sm:p-10 feature-card">
+        <div class="grid lg:grid-cols-2 gap-8 items-center">
+          <div>
+            <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/70 text-emerald-700 border border-emerald-200 text-xs font-bold">
+              <i class="fa-solid fa-bolt"></i>
+              AI crop diagnosis
+            </span>
+            <h1 id="hero-title" class="mt-6 text-4xl sm:text-5xl font-black leading-tight text-slate-900">
+              Identify Crop Diseases <span class="text-emerald-600">Instantly with AI</span>
+            </h1>
+            <p id="hero-text" class="mt-6 text-base sm:text-lg text-slate-600 max-w-xl">
+              Smart diagnosis for healthier crops, faster decisions, and better yields — all from a single leaf image.
+            </p>
+            <div class="mt-8 flex flex-wrap gap-3">
+              <button onclick="switchTab('scan')" id="hero-cta-scan" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition">Scan Your Crop</button>
+              <button onclick="switchTab('database')" id="hero-cta-browse" class="bg-white/80 text-slate-800 border border-slate-200 px-6 py-3 rounded-xl font-bold shadow-sm transition">Browse Diseases</button>
+            </div>
+          </div>
 
-<section id="view-scan" class="hidden max-w-3xl mx-auto px-4 py-8">
-<div class="bg-white rounded-2xl border border-slate-200 shadow-lg p-6">
-<div class="mb-6"><h1 class="text-2xl font-bold text-slate-900">Scan Crop Leaf</h1><p class="text-xs text-slate-500 mt-1">Upload a photo of your crop leaf to identify diseases using AI.</p></div>
-<div class="grid grid-cols-3 gap-2 p-1 bg-slate-100 rounded-xl mb-6 text-xs font-semibold">
-<button onclick="setScanMode('upload')" id="tab-upload" class="py-2 rounded-lg text-center flex items-center justify-center gap-2"><i class="fa-solid fa-cloud-arrow-up"></i> Upload</button>
-<button onclick="setScanMode('camera')" id="tab-camera" class="py-2 rounded-lg text-center flex items-center justify-center gap-2"><i class="fa-solid fa-camera"></i> Camera</button>
-<button onclick="setScanMode('gallery')" id="tab-gallery" class="py-2 rounded-lg text-center flex items-center justify-center gap-2"><i class="fa-solid fa-images"></i> Gallery</button>
-</div>
-<div class="mb-4"><label class="block text-xs font-bold text-slate-700 mb-1">Select Crop Type for Validation:</label>
-<select id="scan-crop-select" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-brand-500"></select></div>
-<div id="scan-dropzone" class="border-2 border-dashed border-slate-300 rounded-2xl p-8 text-center bg-slate-50 hover:bg-slate-100 transition cursor-pointer" onclick="triggerFileInput()">
-<input type="file" id="scan-file-input" accept="image/*" class="hidden" onclick="event.stopPropagation()" onchange="handleFileSelect(event)">
-<div id="dropzone-prompt" class="space-y-3">
-<div class="w-14 h-14 bg-brand-100 text-brand-600 rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-inner"><i class="fa-solid fa-circle-arrow-down animate-bounce"></i></div>
-<p class="text-xs font-bold text-slate-700">Click or Drag & Drop leaf image here to upload</p>
-<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-200/70 text-slate-600 text-[11px] font-semibold"><i class="fa-solid fa-arrow-up-from-bracket"></i> Select File</div>
-<p class="text-[11px] text-slate-400">Supports JPG, PNG up to 10MB</p></div>
-<div id="dropzone-preview" class="hidden space-y-3">
-<img id="preview-img" src="" class="max-h-48 mx-auto rounded-xl shadow-md border border-slate-200">
-<p id="preview-filename" class="text-xs font-bold text-slate-700"></p>
-<p class="text-[11px] text-brand-600 font-semibold">Click to change photo</p></div>
-</div>
-<div class="mt-4"><p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Or click sample leaf presets:</p>
-<div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-<button onclick="presetScan('Tomato','Yellow Leaf Curl Virus')" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-left text-xs font-medium text-slate-700">🍅 Tomato - Leaf Curl</button>
-<button onclick="presetScan('Tomato','Early Blight')" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-left text-xs font-medium text-slate-700">🍅 Tomato - Early Blight</button>
-<button onclick="presetScan('Apple','Apple Scab')" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-left text-xs font-medium text-slate-700">🍎 Apple - Apple Scab</button>
-<button onclick="presetScan('Potato','Late Blight')" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-left text-xs font-medium text-slate-700">🥔 Potato - Late Blight</button>
-<button onclick="presetScan('Corn (Maize)','Gray Leaf Spot')" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-left text-xs font-medium text-slate-700">🌽 Corn - Gray Spot</button>
-<button onclick="presetScan('Unknown','Rose Plant Black Spot')" class="p-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-left text-xs font-medium">🌹 Rose Leaf (Not Supported)</button>
-</div></div>
-<div class="mt-6"><button onclick="runDiagnosis()" id="run-scan-btn" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl shadow-md transition flex items-center justify-center gap-2"><i class="fa-solid fa-magnifying-glass"></i> Run AI Scan</button>
-<div id="scan-result-card" class="hidden mt-6 p-5 rounded-2xl border"></div>
-</div></section>
-</main>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="rounded-2xl bg-white/80 p-5 border border-slate-200 shadow-soft">
+              <div class="text-3xl mb-3">🌾</div>
+              <div id="stat-disease" class="text-2xl font-black text-emerald-600">52</div>
+              <div class="text-xs font-semibold text-slate-600">Disease classes</div>
+            </div>
+            <div class="rounded-2xl bg-white/80 p-5 border border-slate-200 shadow-soft">
+              <div class="text-3xl mb-3">🌱</div>
+              <div class="text-2xl font-black text-emerald-600">13</div>
+              <div class="text-xs font-semibold text-slate-600">Crops</div>
+            </div>
+            <div class="rounded-2xl bg-white/80 p-5 border border-slate-200 shadow-soft col-span-2">
+              <div class="text-sm uppercase tracking-[0.2em] text-slate-500 font-bold">Why farmers trust us</div>
+              <ul class="mt-4 space-y-3 text-sm text-slate-700">
+                <li>✓ Early disease warnings</li>
+                <li>✓ Faster treatment planning</li>
+                <li>✓ Better field health decisions</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-<div id="detail-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4" onclick="if(event.target===this)closeModal()">
-<div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-100 relative max-h-[90vh] overflow-y-auto">
-<button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-lg p-1"><i class="fa-solid fa-xmark"></i></button>
-<div id="modal-content"></div></div></div>
+    <section id="view-database" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="mb-6">
+        <h2 id="db-title" class="text-3xl font-black text-slate-900">Disease Database</h2>
+        <p id="db-subtitle" class="mt-2 text-sm text-slate-600">Browse disease classes across multiple crop types</p>
+      </div>
 
-<footer class="bg-slate-900 text-slate-400 py-6 border-t border-slate-800 text-xs">
-<div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-<div class="flex items-center gap-2"><span class="w-5 h-5 bg-brand-600 text-white rounded flex items-center justify-center font-bold text-[10px]">🌿</span><span class="text-white font-bold">CropGuard</span></div>
-<p>&copy; 2026 CropGuard AI. Empowering Precision Agriculture.</p></div></footer>
+      <div class="glass rounded-2xl p-4 mb-6">
+        <input id="db-search" type="text" placeholder="Search disease" oninput="filterDiseaseCards()" class="w-full bg-white/70 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+      </div>
 
-<script>
-const supportedCrops=[['Tomato','🍅'],['Apple','🍎'],['Banana','🍌'],['Barley','🌾'],['Bell Pepper','🫑'],['Citrus','🍊'],['Corn (Maize)','🌽'],['Cotton','🌱'],['Grape','🍇'],['Potato','🥔'],['Rice','🌾'],['Soybean','🫘'],['Wheat','🌾']];
-const emoji=Object.fromEntries(supportedCrops);
-const D=[
-['Tomato','Yellow Leaf Curl Virus','High','Whitefly-spread virus causing curled, yellowing leaves and stunted plants.','Remove infected plants; control whiteflies with neem oil or imidacloprid.','Use resistant varieties, yellow sticky traps and insect nets.'],
-['Tomato','Early Blight','Medium','Fungal disease with dark concentric-ring spots on older leaves.','Spray copper fungicide or mancozeb; remove infected leaves.','Rotate crops, mulch soil, avoid overhead watering.'],
-['Tomato','Late Blight','High','Dark water-soaked lesions that spread fast in cool, wet weather.','Apply metalaxyl or chlorothalonil immediately; destroy infected plants.','Ensure spacing and airflow, remove infected debris.'],
-['Apple','Apple Scab','Medium','Olive-green to black scabby spots on leaves and fruit.','Spray captan or sulfur at green-tip stage; rake fallen leaves.','Plant resistant cultivars; prune for airflow.'],
-['Apple','Black Rot','Medium','Brown leaf spots (frogeye) and rotting fruit.','Prune cankers; apply fungicide during bloom.','Remove mummified fruit and dead wood.'],
-['Banana','Black Sigatoka','High','Dark streaks on leaves reducing photosynthesis and yield.','Remove infected leaves; apply propiconazole.','Good drainage, proper spacing, resistant varieties.'],
-['Barley','Powdery Mildew','Low','White powdery growth on leaves and stems.','Apply sulfur or triazole fungicide.','Avoid dense sowing; use resistant varieties.'],
-['Bell Pepper','Bacterial Spot','Medium','Small water-soaked spots turning brown with yellow halos.','Copper sprays; remove infected plants.','Use certified seed; avoid working in wet fields.'],
-['Citrus','Citrus Canker','High','Raised corky lesions with yellow halos on leaves and fruit.','Prune infected twigs; spray copper bactericide.','Windbreaks, disinfect tools, control leaf miners.'],
-['Corn (Maize)','Gray Leaf Spot','Medium','Rectangular tan-gray lesions running along leaf veins.','Apply strobilurin fungicide at tasseling.','Rotate crops, till residue, choose tolerant hybrids.'],
-['Corn (Maize)','Common Rust','Low','Small reddish-brown pustules on both leaf surfaces.','Fungicide if severe early on.','Plant resistant hybrids early.'],
-['Cotton','Leaf Curl Virus','High','Upward curling leaves with thickened veins, spread by whitefly.','Control whiteflies; uproot infected plants.','Resistant varieties; remove weed hosts.'],
-['Grape','Black Rot','High','Brown circular leaf spots and shriveled black fruit.','Spray myclobutanil or mancozeb from early shoot growth.','Remove mummies; open canopy.'],
-['Grape','Downy Mildew','Medium','Yellow oily patches with white growth underneath.','Bordeaux mixture or metalaxyl sprays.','Improve airflow and drainage.'],
-['Potato','Late Blight','High','Dark water-soaked lesions; can destroy a field within days.','Apply mancozeb or cymoxanil; destroy infected haulms.','Certified seed tubers; hill soil; avoid overhead irrigation.'],
-['Potato','Early Blight','Medium','Brown target-like spots on lower leaves.','Chlorothalonil or mancozeb sprays.','Rotate crops; balanced fertilization.'],
-['Rice','Blast','High','Diamond-shaped gray lesions on leaves and neck rot.','Spray tricyclazole; reduce nitrogen.','Resistant varieties; balanced fertilizer.'],
-['Rice','Brown Spot','Medium','Oval brown spots on leaves, linked to poor soil nutrition.','Apply mancozeb; correct nutrient deficiency.','Use healthy seed; add potassium.'],
-['Soybean','Frogeye Leaf Spot','Medium','Circular spots with gray centers and dark borders.','Foliar fungicide at flowering.','Rotate crops; use resistant varieties.'],
-['Wheat','Leaf Rust','Medium','Orange-brown pustules scattered on leaves.','Apply propiconazole at first sign.','Resistant varieties; timely sowing.'],
-['Wheat','Powdery Mildew','Low','White fluffy patches on leaves and stems.','Sulfur or triazole fungicides.','Avoid excess nitrogen; ensure spacing.']];
-const dis=D.map((d,i)=>({id:i,crop:d[0],name:d[1],sev:d[2],desc:d[3],treat:d[4],prev:d[5]}));
-const T={en:{db:'Diseases',hi:'History',sc:'Scan Now',s1:'Scan Your Crop',s2:'Browse Diseases',h:'How CropGuard Works',su:'Supported Crops'},te:{db:'వ్యాధులు',hi:'చరిత్ర',sc:'స్కాన్ చేయండి',s1:'మీ పంటను స్కాన్ చేయండి',s2:'వ్యాధులన చూడండి',h:'CropGuard ఎలా పనిచేస్తుంది',su:'మద్దతు ఉన్న పంటలు'},hi:{db:'रोग',hi:'इतिहास',sc:'स्कैन करें',s1:'अपनी फसल स्कैन करें',s2:'रोग देखें',h:'CropGuard कैसे काम करता है',su:'समर्थित फसलें'},ta:{db:'நோய்கள்',hi:'வரலாறு',sc:'ஸ்கேன்',s1:'பயிரை ஸ்கேன் செய்யுங்கள்',s2:'நோய்களைப் பார்க்க',h:'CropGuard எப்படி செயல்படுகிறது',su:'ஆதரிக்கப்படும் பயிர்கள்'}};
-const $=id=>document.getElementById(id);
-let history=[],file=null,thumb=null,cropFilter='All',nextId=1,mode='upload';
-try{history=JSON.parse(localStorage.getItem('cg_hist')||'[]')}catch(e){}
-if(!history.length){history=[{id:nextId++,disease:0,crop:'Tomato',conf:94,date:'2026-09-28'},{id:nextId++,disease:14,crop:'Potato',conf:91,date:'2026-09-29'},{id:nextId++,disease:9,crop:'Corn (Maize)',conf:89,date:'2026-09-30'}]}
-nextId=Math.max(0,...history.map(h=>h.id))+1;
-function save(){try{localStorage.setItem('cg_hist',JSON.stringify(history))}catch(e){}$('total-scans-count').textContent=history.length}
-function changeLanguage(l){const t=T[l];$('nav-db').textContent=t.db;$('nav-history').textContent=t.hi;$('nav-scan').textContent=t.sc;$('hero-cta-scan').textContent=t.s1;$('hero-cta-browse').textContent=t.s2;for(const x of ['how-title','supported-title']){const el=$(x); if(el) el.textContent = x==='how-title'?t.h: t.su;}};
-function switchTab(n){['home','database','history','scan'].forEach(v=>{$('view-'+v).classList.toggle('hidden',v!==n);$('view-'+v).classList.toggle('block',v===n)});if(n==='history')renderHistory();if(n==='database')filterDatabase();window.scrollTo(0,0)}
-const sevCls={High:'bg-red-100 text-red-700',Medium:'bg-amber-100 text-amber-700',Low:'bg-brand-100 text-brand-700'};
-function filterDatabase(){const q=$('db-search').value.toLowerCase();$('filter-chips').innerHTML=['All',...supportedCrops.map(c=>c[0])].map(c=>`<button onclick="setCropFilter('${c}')" class="px-3 py-1.5 rounded-lg text-xs font-medium border ${c===cropFilter?'bg-brand-600 text-white border-brand-600':'bg-white text-slate-600 border-slate-200'}">${c}</button>`).join('');$('disease-cards-container').innerHTML=dis.filter(d=>(cropFilter==='All'||d.crop===cropFilter)&&(d.name+d.crop).toLowerCase().includes(q)).map(d=>`<div onclick="openDisease(${d.id})" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 cursor-pointer hover:shadow-md transition"><div class="flex items-center justify-between gap-3"><div class="text-xs font-bold text-slate-500">${emoji[d.crop]} ${d.crop}</div><span class="px-2 py-1 rounded-full text-[10px] font-bold ${sevCls[d.sev]}">${d.sev}</span></div><h3 class="mt-3 text-base font-bold text-slate-900">${d.name}</h3><p class="mt-2 text-[11px] text-slate-600 line-clamp-3">${d.desc}</p></div>`).join('') || '<div class="col-span-full text-center py-10 text-sm text-slate-500">No diseases found.</div>'}
-function setCropFilter(c){cropFilter=c;filterDatabase()}
-function renderHistory(){$('history-list').innerHTML=history.length?[...history].reverse().map(h=>{const d=dis[h.disease];return `<div onclick="openScan(${h.id})" class="flex items-center gap-3 p-4 border-b border-slate-200 hover:bg-slate-50 cursor-pointer"><div class="w-12 h-12 rounded-xl bg-brand-50 text-xl flex items-center justify-center">${emoji[d.crop]}</div><div class="flex-1"><div class="text-xs text-slate-500">${d.crop}</div><div class="font-bold text-sm text-slate-900">${d.name}</div><div class="text-[11px] text-slate-500">${h.conf}% confidence • ${h.date}</div></div><i class="fa-solid fa-chevron-right text-slate-300"></i></div>`}).join(''):'<div class="p-10 text-center text-slate-500 text-sm">No scans yet.</div>'}
-function detailHTML(d,conf,img){return `${img?`<img src="${img}" class="max-h-40 rounded-xl mb-4 mx-auto">`:''}<div class="text-xs text-slate-500">${emoji[d.crop]} ${d.crop}</div><h2 class="text-xl font-bold text-slate-900 mt-1">${d.name}</h2><div class="mt-3 flex items-center gap-2"><span class="text-[11px] font-bold text-brand-700 bg-brand-50 px-2 py-1 rounded-full">${conf||'High'}% confidence</span><span class="text-[11px] font-bold ${sevCls[d.sev]} px-2 py-1 rounded-full">${d.sev}</span></div><h4 class="font-bold text-sm mt-4">Description</h4><p class="text-xs text-slate-600">${d.desc}</p><h4 class="font-bold text-sm mt-3">💊 Treatment</h4><p class="text-xs text-slate-600">${d.treat}</p><h4 class="font-bold text-sm mt-3">🛡️ Prevention</h4><p class="text-xs text-slate-600">${d.prev}</p>`}
-function showModal(h){$('modal-content').innerHTML=h;$('detail-modal').classList.remove('hidden');$('detail-modal').classList.add('flex')}
-function closeModal(){$('detail-modal').classList.add('hidden');$('detail-modal').classList.remove('flex')}
-function openScan(id){const h=history.find(x=>x.id===id);showModal(detailHTML(dis[h.disease],h.conf,h.img))}
-function openDisease(id){showModal(detailHTML(dis[id],100))}
-function resetScan(){file=null;thumb=null;$('scan-file-input').value='';$('preview-img').src='';$('dropzone-preview').classList.add('hidden');$('dropzone-prompt').classList.remove('hidden');$('scan-result-card').classList.add('hidden')}
-function startNewScan(){closeModal();resetScan();switchTab('scan')}
-function setScanMode(m,quiet){mode=m;['upload','camera','gallery'].forEach(t=>{$('tab-'+t).className='py-2 rounded-lg text-center flex items-center justify-center gap-2 '+(t===m?'bg-brand-600 text-white':'bg-transparent text-slate-600')});const i=$('scan-file-input');m==='camera'?i.setAttribute('capture','environment'):i.removeAttribute('capture');if(!quiet)i.click()}
-function triggerFileInput(){$('scan-file-input').click()}
-function handleFileSelect(e){const f=e.target.files[0];if(f)loadFile(f)}
-function loadFile(f){if(!f.type.startsWith('image/')){alert('Please select an image file.');return}file=f;$('scan-result-card').classList.add('hidden');const r=new FileReader();r.onload=ev=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas'),s=Math.min(1,160/Math.max(im.width,im.height));c.width=im.width*s;c.height=im.height*s;const ctx=c.getContext('2d');ctx.drawImage(im,0,0,c.width,c.height);thumb=c.toDataURL('image/jpeg',0.85);$('preview-img').src=thumb;$('preview-filename').textContent=f.name;$('dropzone-preview').classList.remove('hidden');$('dropzone-prompt').classList.add('hidden')};im.src=ev.target.result};r.readAsDataURL(f)}
-const dz=$('scan-dropzone');dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('border-brand-500')});dz.addEventListener('dragleave',()=>dz.classList.remove('border-brand-500'));dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('border-brand-500');const f=e.dataTransfer.files[0];if(f)loadFile(f)});
-function presetScan(crop,name){file=null;thumb=null;$('scan-crop-select').value=crop;$('preview-img').src='';$('dropzone-prompt').classList.remove('hidden');$('dropzone-preview').classList.add('hidden');$('preview-filename').textContent='';$('scan-result-card').classList.add('hidden');if(name){const fake=document.createElement('canvas');fake.width=160;fake.height=120;const ct=fake.getContext('2d');ct.fillStyle='#d1fae5';ct.fillRect(0,0,160,120);ct.fillStyle='#166534';ct.fillRect(30,30,90,60);ct.strokeStyle='#22c55e';ct.lineWidth=6;ct.beginPath();ct.moveTo(25,80);ct.lineTo(135,80);ct.stroke();thumb=fake.toDataURL();$('dropzone-preview').classList.remove('hidden');$('dropzone-prompt').classList.add('hidden');$('preview-img').src=thumb;$('preview-filename').textContent=name;}}
-function runDiagnosis(){if(!file){alert('Please upload a leaf photo or pick a sample preset first.');return}diagnose($('scan-crop-select').value,null)}
-function diagnose(crop,name){const box=$('scan-result-card');box.classList.remove('hidden');box.className='mt-6 p-5 rounded-2xl border bg-slate-50 border-slate-200 text-center text-xs font-semibold text-slate-600';box.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Analyzing leaf...';setTimeout(()=>{let d=dis.find(x=>x.crop===crop&&x.name===name);if(!d){const l=dis.filter(x=>x.crop===crop);d=l[Math.floor(Math.random()*l.length)]}if(crop==='Unknown'||!d){box.className='mt-6 p-5 rounded-2xl border bg-rose-50 border-rose-200';box.innerHTML='<h3 class="font-bold text-rose-700"><i class="fa-solid fa-triangle-exclamation"></i> Plant not recognized</h3><p class="text-xs text-rose-700 mt-2">This leaf is not among the supported crops. Try a clearer photo of a supported crop.</p><button onclick="startNewScan()" class="mt-4 bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-lg text-[11px] font-bold">Scan Another Plant</button>';return}const conf=85+Math.floor(Math.random()*13),rec={id:nextId++,disease:d.id,crop:d.crop,conf,date:new Date().toISOString().slice(0,10),img:thumb};history.push(rec);save();box.className='mt-6 p-5 rounded-2xl border bg-brand-50 border-brand-100';box.innerHTML=`<div class="text-xs text-slate-500">${emoji[d.crop]} ${d.crop} • ${conf}% confidence</div><h3 class="text-lg font-bold text-slate-900">${d.name}</h3><p class="text-xs text-slate-600 mt-1">${d.desc}</p><button onclick="openScan(${rec.id})" class="mt-4 bg-brand-600 hover:bg-brand-700 text-white px-3 py-2 rounded-lg text-[11px] font-bold">View Full Details</button>`;file=null;$('scan-file-input').value=''},900)}
-$('crops-grid').innerHTML=supportedCrops.map(c=>`<div class="bg-white border border-slate-200 rounded-xl p-3 text-center text-xs font-semibold text-slate-700">${c[1]}<br>${c[0]}</div>`).join('');
-$('scan-crop-select').innerHTML=supportedCrops.map(c=>`<option value="${c[0]}">${c[1]} ${c[0]}</option>`).join('')+'<option value="Unknown">❓ Unrecognized / Other Plant (Test Fail Case)</option>';
-setScanMode('upload',true);save();
-</script>
-</body></html>
+      <div id="disease-cards" class="grid md:grid-cols-2 xl:grid-cols-3 gap-5"></div>
+    </section>
+
+    <section id="view-history" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="mb-6 flex flex-col sm:flex-row justify-between gap-3 items-start sm:items-center">
+        <div>
+          <h2 id="history-title" class="text-3xl font-black text-slate-900">Scan History</h2>
+          <p id="history-subtitle" class="mt-2 text-sm text-slate-600">Click a previous scan to review diagnostic guidance</p>
+        </div>
+        <button onclick="switchTab('scan')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold shadow-md transition">New Scan</button>
+      </div>
+
+      <div id="history-list" class="space-y-4"></div>
+    </section>
+
+    <section id="view-scan" class="hidden max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="glass rounded-[28px] p-6 sm:p-8">
+        <h2 id="scan-title" class="text-3xl font-black text-slate-900">Scan Crop Leaf</h2>
+        <p id="scan-subtitle" class="mt-2 text-sm text-slate-600">Upload a photo to detect disease and receive treatment guidance.</p>
+
+        <div class="mt-6 grid md:grid-cols-2 gap-5">
+          <div class="rounded-2xl border border-dashed border-emerald-300 bg-emerald-50/60 p-6 text-center">
+            <div class="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 text-3xl flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+            <p class="font-bold text-slate-800">Choose an image</p>
+            <input type="file" accept="image/*" id="scan-input" class="mt-4 block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-emerald-600 file:text-white" />
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 bg-white/80 p-5">
+            <label class="block text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Crop type</label>
+            <select id="crop-select" class="mt-3 w-full border border-slate-200 rounded-xl px-3 py-3 text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <option>Tomato</option>
+              <option>Potato</option>
+              <option>Apple</option>
+              <option>Rice</option>
+              <option>Wheat</option>
+              <option>Banana</option>
+              <option>Grape</option>
+            </select>
+
+            <div class="mt-6">
+              <p class="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Quick sample</p>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <button class="sample-chip" onclick="setSample('Tomato','Yellow Leaf Curl Virus')">🍅 Tomato</button>
+                <button class="sample-chip" onclick="setSample('Potato','Late Blight')">🥔 Potato</button>
+                <button class="sample-chip" onclick="setSample('Apple','Apple Scab')">🍎 Apple</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 flex justify-center">
+          <button onclick="runDiagnosis()" id="run-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition">Run Diagnosis</button>
+        </div>
+
+        <div id="result-box" class="hidden mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+          <div id="result-crop" class="text-sm font-bold text-emerald-700"></div>
+          <div id="result-disease" class="mt-2 text-2xl font-black text-slate-900"></div>
+          <div id="result-confidence" class="mt-2 text-sm text-slate-600"></div>
+          <div id="result-tip" class="mt-4 text-sm text-slate-700 leading-6"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const diseaseData = [
+      { crop: 'Tomato', name: 'Yellow Leaf Curl Virus', severity: 'High', desc: 'Leaves curl upward and turn yellow, often because of whitefly attack.' },
+      { crop: 'Tomato', name: 'Early Blight', severity: 'Medium', desc: 'Dark concentric spots spread over lower leaves.' },
+      { crop: 'Potato', name: 'Late Blight', severity: 'High', desc: 'Water-soaked lesions rapidly spread in cool, wet conditions.' },
+      { crop: 'Potato', name: 'Early Blight', severity: 'Medium', desc: 'Target-like brown spots appear on older leaves.' },
+      { crop: 'Apple', name: 'Apple Scab', severity: 'Medium', desc: 'Olive-green scab patches form on leaves and fruit.' },
+      { crop: 'Rice', name: 'Blast', severity: 'High', desc: 'Diamond-shaped lesions appear on leaves and panicles.' },
+      { crop: 'Wheat', name: 'Leaf Rust', severity: 'Medium', desc: 'Orange-brown pustules appear on the leaf surface.' },
+      { crop: 'Banana', name: 'Black Sigatoka', severity: 'High', desc: 'Dark streaks reduce the plant’s ability to photosynthesize.' },
+      { crop: 'Grape', name: 'Black Rot', severity: 'High', desc: 'Circular brown spots and shriveled fruit are common signs.' }
+    ];
+
+    const historyData = [
+      { crop: 'Tomato', disease: 'Yellow Leaf Curl Virus', date: '2026-10-01', confidence: 94 },
+      { crop: 'Potato', disease: 'Late Blight', date: '2026-10-03', confidence: 91 },
+      { crop: 'Apple', disease: 'Apple Scab', date: '2026-10-05', confidence: 88 }
+    ];
+
+    const T = {
+      en: {
+        navDb: 'Diseases',
+        navHistory: 'History',
+        navScan: 'Scan',
+        heroTitle: 'Identify Crop Diseases <span class="text-emerald-600">Instantly with AI</span>',
+        heroText: 'Smart diagnosis for healthier crops, faster decisions, and better yields — all from a single leaf image.',
+        heroCtaScan: 'Scan Your Crop',
+        heroCtaBrowse: 'Browse Diseases',
+        dbTitle: 'Disease Database',
+        dbSubtitle: 'Browse disease classes across multiple crop types',
+        dbSearch: 'Search disease',
+        historyTitle: 'Scan History',
+        historySubtitle: 'Click a previous scan to review diagnostic guidance',
+        scanTitle: 'Scan Crop Leaf',
+        scanSubtitle: 'Upload a photo to detect disease and receive treatment guidance.',
+        runBtn: 'Run Diagnosis',
+        newScan: 'New Scan',
+        cropType: 'Crop Type',
+        sample: 'Quick sample',
+        empty: 'No matching diseases found.'
+      },
+      hi: {
+        navDb: 'रोग',
+        navHistory: 'इतिहास',
+        navScan: 'स्कैन',
+        heroTitle: 'एआई से फसल रोगों की पहचान <span class="text-emerald-600">तुरंत करें</span>',
+        heroText: 'स्वस्थ फसल, तेज़ निर्णय और बेहतर उपज के लिए स्मार्ट निदान — एक ही पत्ते की तस्वीर से।',
+        heroCtaScan: 'अपनी फसल स्कैन करें',
+        heroCtaBrowse: 'रोग देखें',
+        dbTitle: 'रोग डेटाबेस',
+        dbSubtitle: 'कई फसल प्रकारों के रोग देखें',
+        dbSearch: 'रोग खोजें',
+        historyTitle: 'स्कैन इतिहास',
+        historySubtitle: 'पिछले स्कैन को खोलकर निदान सलाह देखें',
+        scanTitle: 'फसल का पत्ता स्कैन करें',
+        scanSubtitle: 'छवि अपलोड करें और रोग पहचान के साथ उपचार सुझाव पाएं।',
+        runBtn: 'निदान चलाएँ',
+        newScan: 'नया स्कैन',
+        cropType: 'फसल प्रकार',
+        sample: 'त्वरित नमूना',
+        empty: 'कोई मिलान नहीं मिला।'
+      },
+      te: {
+        navDb: 'వ్యాధులు',
+        navHistory: 'చరిత్ర',
+        navScan: 'స్కాన్',
+        heroTitle: 'ఏఐతో పంట వ్యాధులను <span class="text-emerald-600">తక్షణమే గుర్తించండి</span>',
+        heroText: 'స్వస్థతమైన పంటలు, వేగవంతమైన నిర్ణయాలు మరియు మంచి దిగుబడి కోసం స్మార్ట్ డయాగ్నోసిస్.',
+        heroCtaScan: 'మీ పంటను స్కాన్ చేయండి',
+        heroCtaBrowse: 'వ్యాధులను చూడండి',
+        dbTitle: 'వ్యాధి డేటాబేస్',
+        dbSubtitle: 'కనీసం ఒకటి 이상의 పంటల వ్యాధులను చూడండి',
+        dbSearch: 'వ్యాధి శోధించండి',
+        historyTitle: 'స్కాన్ చరిత్ర',
+        historySubtitle: 'మునుపటి స్కాన్‌ను తెరిచి సూచనలను చూడండి',
+        scanTitle: 'పంట కొమ్మను స్కాన్ చేయండి',
+        scanSubtitle: 'చిత్రాన్ని అప్లోడ్ చేసి వ్యాధి మరియు చికిత్స సూచనలను చూడు.',
+        runBtn: 'డయాగ్నోసిస్ ప్రారంభించండి',
+        newScan: 'కొత్త స్కాన్',
+        cropType: 'పంట రకం',
+        sample: 'త్వరిత నమూనా',
+        empty: 'సరిపోలిన వ్యాధులు లేవు.'
+      },
+      ta: {
+        navDb: 'நோய்கள்',
+        navHistory: 'வரலாறு',
+        navScan: 'ஸ்கேன்',
+        heroTitle: 'AI மூலம் பயிர் நோய்களை <span class="text-emerald-600">உடனடியாக கண்டறியுங்கள்</span>',
+        heroText: 'சுகமான பயிர்கள், விரைவான முடிவுகள் மற்றும் சிறந்த விளைச்சலுக்கான ஸ்மார்ட் நோய் தீர்மானம்.',
+        heroCtaScan: 'உங்கள் பயிரை ஸ்கேன் செய்யுங்கள்',
+        heroCtaBrowse: 'நோய்களைப் பாருங்கள்',
+        dbTitle: 'நோய் தரவுத்தளம்',
+        dbSubtitle: 'பல பயிர் வகைகளின் நோய்களை உலவுங்கள்',
+        dbSearch: 'நோயைத் தேடுங்கள்',
+        historyTitle: 'ஸ்கேன் வரலாறு',
+        historySubtitle: 'முந்தைய ஸ்கேனைக் கிளிக் செய்து ஆலோசனைகளைப் பார்க்கவும்',
+        scanTitle: 'பயிர் இலை ஸ்கேன்',
+        scanSubtitle: 'படத்தை பதிவேற்றி நோய் கண்டறிதல் மற்றும் சிகிச்சை வழிமுறைகளைப் பெறுங்கள்.',
+        runBtn: 'நோய் கண்டறிதலை தொடங்குங்கள்',
+        newScan: 'புதிய ஸ்கேன்',
+        cropType: 'பயிர் வகை',
+        sample: 'விரைவான மாதிரி',
+        empty: 'பொருத்தமான நோய்கள் இல்லை.'
+      }
+    };
+
+    function renderCards() {
+      const cards = diseaseData.map((item) => {
+        const levelClass = item.severity === 'High' ? 'status-high' : item.severity === 'Medium' ? 'status-medium' : 'status-low';
+        return `
+          <article class="disease-card rounded-2xl p-5">
+            <div class="flex items-center justify-between gap-3">
+              <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">${item.crop}</div>
+              <span class="status-pill ${levelClass}">${item.severity}</span>
+            </div>
+            <h3 class="mt-4 text-xl font-bold text-slate-900">${item.name}</h3>
+            <p class="mt-3 text-sm text-slate-600 leading-6">${item.desc}</p>
+          </article>
+        `;
+      }).join('');
+
+      document.getElementById('disease-cards').innerHTML = cards;
+    }
+
+    function filterDiseaseCards() {
+      const query = document.getElementById('db-search').value.toLowerCase();
+      const container = document.getElementById('disease-cards');
+      const filtered = diseaseData.filter(item => {
+        return item.crop.toLowerCase().includes(query) || item.name.toLowerCase().includes(query);
+      });
+
+      if (!filtered.length) {
+        container.innerHTML = `<div class="col-span-full rounded-2xl border border-dashed border-slate-300 bg-white/70 p-8 text-center text-slate-500">${T[document.documentElement.lang || 'en'].empty}</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(item => {
+        const levelClass = item.severity === 'High' ? 'status-high' : item.severity === 'Medium' ? 'status-medium' : 'status-low';
+        return `
+          <article class="disease-card rounded-2xl p-5">
+            <div class="flex items-center justify-between gap-3">
+              <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">${item.crop}</div>
+              <span class="status-pill ${levelClass}">${item.severity}</span>
+            </div>
+            <h3 class="mt-4 text-xl font-bold text-slate-900">${item.name}</h3>
+            <p class="mt-3 text-sm text-slate-600 leading-6">${item.desc}</p>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function renderHistory() {
+      const list = document.getElementById('history-list');
+      list.innerHTML = historyData.map(item => `
+        <div class="glass rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
+          <div>
+            <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">${item.crop}</div>
+            <div class="mt-2 text-xl font-black text-slate-900">${item.disease}</div>
+          </div>
+          <div class="text-sm text-slate-600">
+            <div><strong>${item.confidence}%</strong> confidence</div>
+            <div class="mt-1">${item.date}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function changeLanguage(lang) {
+      const t = T[lang] || T.en;
+      document.documentElement.lang = lang;
+      document.getElementById('lang-select').value = lang;
+
+      document.getElementById('nav-db').textContent = t.navDb;
+      document.getElementById('nav-history').textContent = t.navHistory;
+      document.getElementById('nav-scan').textContent = t.navScan;
+      document.getElementById('hero-title').innerHTML = t.heroTitle;
+      document.getElementById('hero-text').textContent = t.heroText;
+      document.getElementById('hero-cta-scan').textContent = t.heroCtaScan;
+      document.getElementById('hero-cta-browse').textContent = t.heroCtaBrowse;
+      document.getElementById('db-title').textContent = t.dbTitle;
+      document.getElementById('db-subtitle').textContent = t.dbSubtitle;
+      document.getElementById('db-search').placeholder = t.dbSearch;
+      document.getElementById('history-title').textContent = t.historyTitle;
+      document.getElementById('history-subtitle').textContent = t.historySubtitle;
+      document.getElementById('scan-title').textContent = t.scanTitle;
+      document.getElementById('scan-subtitle').textContent = t.scanSubtitle;
+      document.getElementById('run-btn').textContent = t.runBtn;
+      document.querySelector('.sample-chip').innerHTML = '🍅 Tomato';
+
+      const cropLabel = document.querySelector('label[for="crop-select"]');
+      if (cropLabel) cropLabel.textContent = t.cropType;
+
+      const chipLabel = document.querySelector('.sample-chip');
+      if (chipLabel) chipLabel.textContent = '🍅 Tomato';
+
+      filterDiseaseCards();
+    }
+
+    function switchTab(page) {
+      const pages = ['home', 'database', 'history', 'scan'];
+      pages.forEach((key) => {
+        const el = document.getElementById('view-' + key);
+        if (el) {
+          el.classList.toggle('hidden', key !== page);
+        }
+      });
+
+      document.body.setAttribute('data-page', page);
+
+      document.querySelectorAll('[data-page-btn]').forEach((btn) => {
+        btn.classList.toggle('text-emerald-400', btn.getAttribute('data-page-btn') === page);
+      });
+    }
+
+    function setSample(crop, disease) {
+      const cropSelect = document.getElementById('crop-select');
+      if (cropSelect) cropSelect.value = crop;
+      const resultBox = document.getElementById('result-box');
+      if (resultBox) {
+        resultBox.classList.remove('hidden');
+        document.getElementById('result-crop').textContent = crop;
+        document.getElementById('result-disease').textContent = disease;
+        document.getElementById('result-confidence').textContent = 'Confidence: 92%';
+        document.getElementById('result-tip').textContent = 'Suggested action: check leaves, remove affected tissue, and apply disease-control treatment based on crop guidance.';
+      }
+    }
+
+    function runDiagnosis() {
+      const crop = document.getElementById('crop-select').value;
+      const disease = diseaseData[Math.floor(Math.random() * diseaseData.length)];
+      const resultBox = document.getElementById('result-box');
+      resultBox.classList.remove('hidden');
+      document.getElementById('result-crop').textContent = crop;
+      document.getElementById('result-disease').textContent = disease.name;
+      document.getElementById('result-confidence').textContent = 'Confidence: ' + (88 + Math.floor(Math.random() * 9)) + '%';
+      document.getElementById('result-tip').textContent = 'Recommended action: remove damaged leaves, improve airflow, and apply a crop-safe fungicide or treatment plan.';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderCards();
+      renderHistory();
+      switchTab('home');
+      changeLanguage('en');
+    });
+  </script>
+</body>
+</html>
